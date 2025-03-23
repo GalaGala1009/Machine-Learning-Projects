@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GridWorld</title>
+    <link rel="stylesheet" href="../static/style.css">
+</head>
+<body>
+    <div class="container">
+        <h1> GridWorld </h1>
+        <div class="instruction">
+            <p>1. Click「Generate Grid」to generate n * n grid</p>
+            <p>2. Choose position of start, end, and obstacles</p>
+            <p>Notice : maximum number of obstacles equals to n-2 </p>
+        </div>
+        
+        <div class="input-container">
+            <label for="grid-size" style="font-size: 20px;">Grid Size(between 5 to 9): </label>
+            <input type="number" id="grid-size" min="5" max="9" value="{{ grid_size }}">
+            <button id="generate-btn" class="generate-btn">Generate Grid</button>
+        </div>
+
+        <div class="selection-container">
+            <button id="select-start-btn" class="selection-btn">Select Start Position</button>
+            <button id="select-end-btn" class="selection-btn">Select End Postion</button>
+            <button id="select-obs-btn" class="selection-btn">Place Obstacles</button>
+        </div>
+
+        
+        <h3> N x N Grid</h3>
+        <div class ="grid-container"></div>
+        
+
+        <br>
+
+        <div class="matrix-container">
+            <div>
+                <h3 class="matrix-name">Policy Matrix</h3>
+                <div class="policy-matrix"></div>
+            </div>
+            <div>
+                <h3 class="matrix-name">Value Matrix</h3>
+                <div class="value-matrix"></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const initGridSize = {{ grid_size }};
+    </script>
+    <script src="{{ url_for('static', filename='main.js') }}"></script>
+</body>
+</html>

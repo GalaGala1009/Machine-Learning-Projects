@@ -10,6 +10,13 @@ let obstacles = [];
 //policy and value matrix
 let policy = [];
 let value = [];
+const actions = [
+    [-1, 0],  // Up
+    [1, 0],   // Down
+    [0, -1],  // left
+    [0, 1]    // Right
+];
+
 
 let selectMode = null;
 
@@ -74,38 +81,30 @@ function renderPolicyMatrix() {
         }
     }
 
-    generateRandomPolicy();
-    showPolicy();
-    
+    generatePolicy();
 }
 
-function generateRandomPolicy(){
+function generatePolicy(){
     policy = [];
 
     for (let row = 0; row < gridSize; row++) {
         r = [];
         for (let col = 0; col < gridSize; col++) {
-            arr = [];
             let collision = false;
-
             for(let i=0; i<obstacles.length; i++){
                 if(row === obstacles[i][0] && col === obstacles[i][1]){
-                    arr.push([0, 0, 0, 0]);
+                    r.push([0, 0, 0, 0]);
                     collision = true;
                     break;
                 }
             }
 
             if(collision === false){
-                for(let a=0; a<4; a++){
-                    arr.push(Math.floor(Math.random() * 2));
-                }
+                r.push([1, 1, 1, 1]);        
             }
-            r.push(arr);
         }
         policy.push(r);
     }
-    policy[startRow][startCol] = [1, 1, 1, 1];
 }
 
 function showPolicy(){
@@ -172,119 +171,108 @@ function renderValueMatrix() {
         value.push(r);
     }
 
-    calcuateValueFunc();
+    // Update policy and value matrix   
+    valueiteration();
+    calcuateNewPolicy();
+    showPolicy();
     showValue();
 }
 
 
 
-function calcuateValueFunc(){
-    for(let i=0;i<gridSize; i++){
-        for(let j=0;j<gridSize; j++){
+function valueiteration(){
+    //initialize value function
+    for(let i=0; i<gridSize; i++){
+        for(let j=0; j<gridSize; j++){
             value[i][j] = 0.0;
         }
     }
 
-    const gamma = 0.9;
-    const theta = 0.001;
-    const max_iterations = 1000;
+    value[endRow][endCol] = 10;
+    policy[endRow][endCol] = [0, 0, 0, 0];
 
-    value[endRow][endCol] = 10.0;
 
-    for(let g=0;g<max_iterations; g++){
-        delta = 0.0;
-        for(let i=0;i<gridSize; i++){
-            for(let j=0;j<gridSize; j++){
-                for(let o=0;o<obstacles.length; o++){
-                    if(i === obstacles[o][0] && j === obstacles[o][1]){
-                        continue;
-                    }
-                }
+    while(true){
+        let delta = 0.0;
+        let newV = value;
+        const gamma = 0.9; // discount value
+        const theta = 1e-6; 
 
-                let v = value[i][j];
-                let new_v = 0.0;
-                let actions = 0.0;
-                for(let a=0;a<4; a++){
-                    if(policy[i][j][a] === 1){
-                        actions += 1.0;
+        for(let i=0; i<gridSize; i++){
+            for(let j=0; j<gridSize; j++){
+                let stateValue = value[i][j];
+                let bestValue = -Infinity;
+
+                for (let a = 0; a < actions.length; a++) {
+                    if (policy[i][j][a] === 0) continue; 
+
+                    let [di, dj] = actions[a];
+                    let ni = i + di, nj = j + dj;
+
+                    if (ni >= 0 && ni < gridSize && nj >= 0 && nj < gridSize) {
+                        let reward = -1; // cost of a walk
+                        let newValue = reward + gamma * value[ni][nj];
+                        bestValue = Math.max(bestValue, newValue);
                     }
                 }
                 
-                if(actions !== 0){
-                    if(policy[i][j][0] === 1 && i>0){
-                        let next_i = i-1;
-                        let next_j = j;
-                        let reward = 0.0;
-                        for(let o=0;o<obstacles.length; o++){
-                            if(next_i === obstacles[o][0] && next_j === obstacles[o][1]){
-                                next_i = i;
-                                next_j = j;
-                            }
-                        }
-                        if(next_i === endRow && next_j === endCol){
-                            reward = 1.0;
-                        }
-                        let action_value = reward + gamma * value[next_i][next_j];
-                        new_v += action_value / actions;
-                    }
-                    if(policy[i][j][1] === 1 && i<gridSize-1){
-                        let next_i = i+1;
-                        let next_j = j;
-                        let reward = 0.0;
-                        for(let o=0;o<obstacles.length; o++){
-                            if(next_i === obstacles[o][0] && next_j === obstacles[o][1]){
-                                next_i = i;
-                                next_j = j;
-                            }
-                        }
-                        if(next_i === endRow && next_j === endCol){
-                            reward = 1.0;
-                        }
-                        let action_value = reward + gamma * value[next_i][next_j];
-                        new_v += action_value / actions;
-                    }
-                    if(policy[i][j][2] === 1 && j>0){
-                        let next_j = j-1;
-                        let next_i = i;
-                        let reward = 0.0;
-                        for(let o=0;o<obstacles.length; o++){
-                            if(next_i === obstacles[o][0] && next_j === obstacles[o][1]){
-                                next_i = i;
-                                next_j = j;
-                            }
-                        }
-                        if(next_i === endRow && next_j === endCol){
-                            reward = 1.0;
-                        }
-                        let action_value = reward + gamma * value[next_i][next_j];
-                        new_v += action_value / actions;
-                    }
-                    if(policy[i][j][3] === 1 && j<gridSize-1){
-                        let next_j = j+1;
-                        let next_i = i;
-                        let reward = 0.0;
-                        for(let o=0;o<obstacles.length; o++){
-                            if(next_i === obstacles[o][0] && next_j === obstacles[o][1]){
-                                next_i = i;
-                                next_j = j;
-                            }
-                        }
-                        if(next_i === endRow && next_j === endCol){
-                            reward = 1.0;
-                        }
-                        let action_value = reward + gamma * value[next_i][next_j];
-                        new_v += action_value / actions;
-                    }
-    
-                    value[i][j] = new_v;
-                    delta = Math.max(delta, Math.abs(v - new_v));                    
-                }
+                if(bestValue !== -Infinity) newV[i][j] = bestValue;
+                else newV[i][j] = stateValue;
 
+                delta = Math.max(delta, Math.abs(newV[i][j] - value[i][j]));
             }
+        }
 
-            if(delta < theta) break;
+        value = newV;
+        if (delta < theta) break; // end condiction
+    }
+
+}
+
+function calcuateNewPolicy(){
+    //init
+    for(let i=0; i<gridSize; i++){
+        for(let j=0; j<gridSize; j++){
+            policy[i][j] = [1, 1, 1, 1];
         }
     }
+
+    for(let o=0;o<obstacles.length;o++){
+        policy[obstacles[o][0]][obstacles[o][1]] = [0, 0, 0, 0];
+    }
+
+
+    policy[endRow][endCol] = [0, 0, 0, 0];
+
+    let newPolicy = policy;
+
+
+    for(let i=0; i<gridSize; i++){
+        for(let j=0; j<gridSize; j++){
+            let bestAction = [0, 0, 0, 0];
+            let bestValue = -Infinity;
+
+            for(let a=0;a<actions.length; a++){
+                if(policy[i][j][a] === 0) continue;
+
+                let [di, dj] = actions[a];
+                let ni = i + di, nj = j + dj;
+
+                if (ni >= 0 && ni < gridSize && nj >= 0 && nj < gridSize) {
+                    let newValue = value[ni][nj];
+                    if (newValue >= bestValue) {
+                        bestValue = newValue;
+                        //bestAction = [0, 0, 0, 0];
+                        bestAction[a] = 1; // record best actions
+                    }
+                }
+            }
+
+            newPolicy[i][j] = bestAction;
+        }
+    }
+
+    policy = newPolicy;
 }
 
 function showValue(){
@@ -326,15 +314,12 @@ function handleCellClick(row, col) {
         // Update display
         highlightStartCell();
         highlightObsCells();
-        policy[row][col] = [1, 1, 1, 1];
-        showPolicy();
-        
-        calcuateValueFunc();
-        showValue();
 
-        // Reset selection mode
-        //selectMode = null;
-        //document.getElementById('select-start-btn').classList.remove('active');
+        // Update policy and value matrix      
+        valueiteration();
+        calcuateNewPolicy();
+        showPolicy();
+        showValue();
     }
     else if (selectMode === 'end') {
         // Don't allow setting end on start or obstacle
@@ -360,12 +345,11 @@ function handleCellClick(row, col) {
         highlightEndCell();
         highlightObsCells();
 
-        calcuateValueFunc();
+        // Update policy and value matrix   
+        valueiteration();
+        calcuateNewPolicy();
+        showPolicy();
         showValue();
-
-        // Reset selection mode
-        //selectMode = null;
-        //document.getElementById('select-end-btn').classList.remove('active');
     }
     else if (selectMode === 'obs') {
         // Don't allow setting obstacle on start or end
@@ -384,14 +368,15 @@ function handleCellClick(row, col) {
             if (obstacles[i][0] === row && obstacles[i][1] === col) {
                 // If it is, remove it (toggle behavior)
                 obstacles.splice(i, 1);
-                //generate random policy for deleted obstacle
-                arr = [];
-                for(let i=0; i<4; i++){
-                    arr.push(Math.floor(Math.random() * 2));
-                }
-                policy[row][col] = arr;
+                //generate policy for deleted obstacle
                 highlightObsCells();
+
+                // Update policy and value matrix   
+                valueiteration();
+                calcuateNewPolicy();
                 showPolicy();
+                showValue();
+        
                 return;
             }
         }
@@ -403,9 +388,10 @@ function handleCellClick(row, col) {
         // Add new obstacle
         obstacles.push([row, col]);
 
-        policy[row][col] = [0, 0, 0, 0];
+        // Update policy and value matrix   
+        valueiteration();
+        calcuateNewPolicy();
         showPolicy();
-        calcuateValueFunc();
         showValue();
 
         // Update display
@@ -439,9 +425,7 @@ function activateObsSelection() {
 }
 
 
-/**
- * Highlights the start cell
- */
+//Highlights the start cell
 function highlightStartCell() {
     // Remove start class from all cells
     document.querySelectorAll('.cell').forEach(cell => {
@@ -455,9 +439,7 @@ function highlightStartCell() {
     }
 }
 
-/**
- * Highlights the end cell
- */
+//Highlights the end cell
 function highlightEndCell() {
     // Remove end class from all cells
     document.querySelectorAll('.cell').forEach(cell => {
@@ -471,9 +453,8 @@ function highlightEndCell() {
     }
 }
 
-/**
- * Highlights obstacle cells
- */
+
+//Highlights obstacle cells
 function highlightObsCells() {
     // Clear existing obstacle highlights
     document.querySelectorAll('.cell').forEach(cell => {
