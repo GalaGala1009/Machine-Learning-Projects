@@ -4,14 +4,14 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>GridWorld</title>
-    <link rel="stylesheet" href="../static/style.css">
+    <link rel="stylesheet" href="../static/styleV.css">
 </head>
 <body>
     <div class="container">
         <h1> GridWorld </h1>
         <div class="instruction">
             <p>1. Click「Generate Grid」to generate n * n grid</p>
-            <p>2. Choose position of start, end, and obstacles</p>
+            <p>2. Choose positions of start, end, and obstacles</p>
             <p>Notice : maximum number of obstacles equals to n-2 </p>
         </div>
         
@@ -49,6 +49,6 @@
     <script>
         const initGridSize = {{ grid_size }};
     </script>
-    <script src="{{ url_for('static', filename='main.js') }}"></script>
+    <script src="{{ url_for('static', filename='mainV.js') }}"></script>
 </body>
 </html>

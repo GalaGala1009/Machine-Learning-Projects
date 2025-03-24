@@ -1,3 +1,5 @@
+//GridWorld with value iteration
+
 let gridSize = initGridSize;
 //init
 let startRow = 0;
@@ -80,32 +82,8 @@ function renderPolicyMatrix() {
             policyMatrix.appendChild(cell);
         }
     }
-
-    generatePolicy();
 }
 
-function generatePolicy(){
-    policy = [];
-
-    for (let row = 0; row < gridSize; row++) {
-        r = [];
-        for (let col = 0; col < gridSize; col++) {
-            let collision = false;
-            for(let i=0; i<obstacles.length; i++){
-                if(row === obstacles[i][0] && col === obstacles[i][1]){
-                    r.push([0, 0, 0, 0]);
-                    collision = true;
-                    break;
-                }
-            }
-
-            if(collision === false){
-                r.push([1, 1, 1, 1]);        
-            }
-        }
-        policy.push(r);
-    }
-}
 
 function showPolicy(){
     for (let row = 0; row < gridSize; row++) {
@@ -173,7 +151,6 @@ function renderValueMatrix() {
 
     // Update policy and value matrix   
     valueiteration();
-    calcuateNewPolicy();
     showPolicy();
     showValue();
 }
@@ -188,92 +165,77 @@ function valueiteration(){
         }
     }
 
-    value[endRow][endCol] = 10;
+    //initialize policy 
+    policy = [];
+
+    for (let row = 0; row < gridSize; row++) {
+        r = [];
+        for (let col = 0; col < gridSize; col++) {
+            r.push([1, 1, 1, 1]);
+        }
+        policy.push(r);
+    }
+
+    for(let i=0; i<obstacles.length; i++){
+        policy[obstacles[i][0]][obstacles[i][1]] = [0, 0, 0, 0];
+    }
+
     policy[endRow][endCol] = [0, 0, 0, 0];
 
+    //hyper parameters
+    const gamma = 0.9; // discount value
+    const theta = 0.001; 
+    const max_iterations = 1000
 
-    while(true){
+    for(let l=0;l<max_iterations;l++){
         let delta = 0.0;
-        let newV = value;
-        const gamma = 0.9; // discount value
-        const theta = 1e-6; 
-
+        
         for(let i=0; i<gridSize; i++){
             for(let j=0; j<gridSize; j++){
+                if (policy[i][j].every(v => v === 0)) continue;
+
                 let stateValue = value[i][j];
                 let bestValue = -Infinity;
+                let actionVal = [];
 
                 for (let a = 0; a < actions.length; a++) {
-                    if (policy[i][j][a] === 0) continue; 
-
                     let [di, dj] = actions[a];
                     let ni = i + di, nj = j + dj;
+                    
+                    let reward = -0.1;
 
                     if (ni >= 0 && ni < gridSize && nj >= 0 && nj < gridSize) {
-                        let reward = -1; // cost of a walk
+                        if(ni === endRow && nj === endCol) reward = 10;
+                        else if(ni === startRow && nj === startCol) reward = 0;
+
                         let newValue = reward + gamma * value[ni][nj];
+                        actionVal.push(newValue);
+                        bestValue = Math.max(bestValue, newValue);
+                    } else {
+                        let newValue = -0.1 + gamma * value[i][j];
+                        actionVal.push(newValue);
                         bestValue = Math.max(bestValue, newValue);
                     }
                 }
-                
-                if(bestValue !== -Infinity) newV[i][j] = bestValue;
-                else newV[i][j] = stateValue;
+            
+                value[i][j] = bestValue;   
+                policy[i][j] = [0, 0, 0, 0];
 
-                delta = Math.max(delta, Math.abs(newV[i][j] - value[i][j]));
-            }
-        }
-
-        value = newV;
-        if (delta < theta) break; // end condiction
-    }
-
-}
-
-function calcuateNewPolicy(){
-    //init
-    for(let i=0; i<gridSize; i++){
-        for(let j=0; j<gridSize; j++){
-            policy[i][j] = [1, 1, 1, 1];
-        }
-    }
-
-    for(let o=0;o<obstacles.length;o++){
-        policy[obstacles[o][0]][obstacles[o][1]] = [0, 0, 0, 0];
-    }
-
-
-    policy[endRow][endCol] = [0, 0, 0, 0];
-
-    let newPolicy = policy;
-
-
-    for(let i=0; i<gridSize; i++){
-        for(let j=0; j<gridSize; j++){
-            let bestAction = [0, 0, 0, 0];
-            let bestValue = -Infinity;
-
-            for(let a=0;a<actions.length; a++){
-                if(policy[i][j][a] === 0) continue;
-
-                let [di, dj] = actions[a];
-                let ni = i + di, nj = j + dj;
-
-                if (ni >= 0 && ni < gridSize && nj >= 0 && nj < gridSize) {
-                    let newValue = value[ni][nj];
-                    if (newValue >= bestValue) {
-                        bestValue = newValue;
-                        //bestAction = [0, 0, 0, 0];
-                        bestAction[a] = 1; // record best actions
+                for(let a = 0; a < 4; a++){
+                    if (Math.abs(actionVal[a] - bestValue) < 1e-10 ) {
+                        policy[i][j][a] = 1;
                     }
                 }
+                
+                delta = Math.max(delta, Math.abs(value[i][j] - stateValue));
             }
-
-            newPolicy[i][j] = bestAction;
         }
-    }
 
-    policy = newPolicy;
+       
+        if (delta < theta) break; // end condiction
+    }
 }
+
 
 function showValue(){
     for (let row = 0; row < gridSize; row++) {
@@ -317,7 +279,6 @@ function handleCellClick(row, col) {
 
         // Update policy and value matrix      
         valueiteration();
-        calcuateNewPolicy();
         showPolicy();
         showValue();
     }
@@ -347,7 +308,6 @@ function handleCellClick(row, col) {
 
         // Update policy and value matrix   
         valueiteration();
-        calcuateNewPolicy();
         showPolicy();
         showValue();
     }
@@ -373,7 +333,6 @@ function handleCellClick(row, col) {
 
                 // Update policy and value matrix   
                 valueiteration();
-                calcuateNewPolicy();
                 showPolicy();
                 showValue();
         
@@ -390,7 +349,6 @@ function handleCellClick(row, col) {
 
         // Update policy and value matrix   
         valueiteration();
-        calcuateNewPolicy();
         showPolicy();
         showValue();
 
