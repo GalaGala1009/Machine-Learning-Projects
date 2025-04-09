@@ -13,8 +13,8 @@ GridWorld(Value Iteration)/
 |── static/
 | └── mainV.js
 | └── styleV.css
+├── requirements.txt
 └── README.md
-|── requirements.txt
 ```
 3. Steps to Run:
 * Clone or download the project repository
