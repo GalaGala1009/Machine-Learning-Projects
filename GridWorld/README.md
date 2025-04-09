@@ -10,11 +10,11 @@ GridWorld(Value Iteration)/
 ├── app.py
 ├── templates/
 │ └── index.html
-|── static/
+├── static/
 | └── main.js
 | └── style.css
+├── requirements.txt
 └── README.md
-|── requirements.txt
 ```
 3. Steps to Run:
 * Clone or download the project repository
