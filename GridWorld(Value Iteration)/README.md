@@ -23,7 +23,7 @@ GridWorld(Value Iteration)/
 python install -r requirements.txt
 ```
 * Open a terminal and navigate to the project directory:
-```
+```python
  cd GridWorld(Value Ineration)
  #Run the Flask application:
  python app.py
