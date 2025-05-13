@@ -11,4 +11,4 @@ This goal of this project is implementing DQN and it's variants.
 # Report
 This report records the details of DQN implementation.
 
-[Link of report](https://hackmd.io/8EiABfLvQeWkeF1YoLAPgw)
+[Link of report](https://hackmd.io/8EiABfLvQeWkeF1YoLAPgw?view)
